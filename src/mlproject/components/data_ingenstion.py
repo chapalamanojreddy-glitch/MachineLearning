@@ -19,8 +19,8 @@ from sklearn.model_selection import train_test_split
 from dataclasses import dataclass
 
 
-## from mlproject.components.data_transformation import DataTransformation
-## from mlproject.components.data_transformation import DataTransformationConfig
+from mlproject.components.data_transformation import DataTransformation
+
 
 
 @dataclass
