@@ -1,0 +1,12 @@
+prefix=d:/MachineLearning/venv/Library
+exec_prefix=d:/MachineLearning/venv/Library
+libdir=d:/MachineLearning/venv/Library/lib
+includedir=d:/MachineLearning/venv/Library/include
+
+Name: libzmq
+Description: 0MQ c++ library
+Version: 4.3.5
+Libs: -L${libdir} -lzmq
+Libs.private: 
+Requires.private: 
+Cflags: -I${includedir} 
