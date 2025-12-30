@@ -12,3 +12,5 @@
 [35] root - INFO - Division by zero error
 [35] root - INFO - Division by zero error
 [35] root - INFO - Division by zero error
+[22] root - INFO - Logging has started
+[23] root - ERROR - This is an error message

@@ -6,6 +6,7 @@ from tkinter import Toplevel, Text, TclError,\
 from tkinter.ttk import Frame, Scrollbar, Button
 from tkinter.messagebox import showerror
 
+from functools import update_wrapper
 from idlelib.colorizer import color_config
 
 
@@ -169,7 +170,7 @@ def view_file(parent, title, filename, encoding, modal=True, wrap='word',
     with contents of the file.
     """
     try:
-        with open(filename, encoding=encoding) as file:
+        with open(filename, 'r', encoding=encoding) as file:
             contents = file.read()
     except OSError:
         showerror(title='File Load Error',

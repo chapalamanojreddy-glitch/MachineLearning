@@ -1,4 +1,4 @@
-# Copyright (C) 2001 Python Software Foundation
+# Copyright (C) 2001-2006 Python Software Foundation
 # Author: Barry Warsaw
 # Contact: email-sig@python.org
 
@@ -27,10 +27,6 @@ class MultipartConversionError(MessageError, TypeError):
 
 class CharsetError(MessageError):
     """An illegal charset was given."""
-
-
-class HeaderWriteError(MessageError):
-    """Error while writing headers."""
 
 
 # These are parsing defects which the parser was able to work around.
@@ -112,6 +108,3 @@ class NonASCIILocalPartDefect(HeaderDefect):
     """local_part contains non-ASCII characters"""
     # This defect only occurs during unicode parsing, not when
     # parsing messages decoded from binary.
-
-class InvalidDateDefect(HeaderDefect):
-    """Header has unparsable or invalid date"""

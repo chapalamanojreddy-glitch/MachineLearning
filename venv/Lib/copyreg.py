@@ -25,21 +25,16 @@ def constructor(object):
 
 # Example: provide pickling support for complex numbers.
 
-def pickle_complex(c):
-    return complex, (c.real, c.imag)
+try:
+    complex
+except NameError:
+    pass
+else:
 
-pickle(complex, pickle_complex, complex)
+    def pickle_complex(c):
+        return complex, (c.real, c.imag)
 
-def pickle_union(obj):
-    import typing, operator
-    return operator.getitem, (typing.Union, obj.__args__)
-
-pickle(type(int | str), pickle_union)
-
-def pickle_super(obj):
-    return super, (obj.__thisclass__, obj.__self__)
-
-pickle(super, pickle_super)
+    pickle(complex, pickle_complex, complex)
 
 # Support for pickling new-style objects
 
@@ -53,7 +48,6 @@ def _reconstructor(cls, base, state):
     return obj
 
 _HEAPTYPE = 1<<9
-_new_type = type(int.__new__)
 
 # Python code for object.__reduce_ex__ for protocols 0 and 1
 
@@ -62,9 +56,6 @@ def _reduce_ex(self, proto):
     cls = self.__class__
     for base in cls.__mro__:
         if hasattr(base, '__flags__') and not base.__flags__ & _HEAPTYPE:
-            break
-        new = base.__new__
-        if isinstance(new, _new_type) and new.__self__ is base:
             break
     else:
         base = object # not really reachable
@@ -88,10 +79,6 @@ def _reduce_ex(self, proto):
         except AttributeError:
             dict = None
     else:
-        if (type(self).__getstate__ is object.__getstate__ and
-            getattr(self, "__slots__", None)):
-            raise TypeError("a class that defines __slots__ without "
-                            "defining __getstate__ cannot be pickled")
         dict = getstate()
     if dict:
         return _reconstructor, args, dict

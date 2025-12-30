@@ -24,7 +24,7 @@ For request-based servers (including socket-based):
 
 The classes in this module favor the server type that is simplest to
 write: a synchronous TCP/IP server.  This is bad class design, but
-saves some typing.  (There's also the issue that a deep class hierarchy
+save some typing.  (There's also the issue that a deep class hierarchy
 slows down method lookups.)
 
 There are five classes in an inheritance diagram, four of which represent
@@ -141,8 +141,6 @@ if hasattr(socket, "AF_UNIX"):
     __all__.extend(["UnixStreamServer","UnixDatagramServer",
                     "ThreadingUnixStreamServer",
                     "ThreadingUnixDatagramServer"])
-    if hasattr(os, "fork"):
-        __all__.extend(["ForkingUnixStreamServer", "ForkingUnixDatagramServer"])
 
 # poll/select have the advantage of not requiring any extra file descriptor,
 # contrarily to epoll/kqueue (also, they require a single syscall).
@@ -189,7 +187,6 @@ class BaseServer:
     - address_family
     - socket_type
     - allow_reuse_address
-    - allow_reuse_port
 
     Instance variables:
 
@@ -294,7 +291,8 @@ class BaseServer:
             selector.register(self, selectors.EVENT_READ)
 
             while True:
-                if selector.select(timeout):
+                ready = selector.select(timeout)
+                if ready:
                     return self._handle_request_noblock()
                 else:
                     if timeout is not None:
@@ -376,7 +374,7 @@ class BaseServer:
 
         """
         print('-'*40, file=sys.stderr)
-        print('Exception occurred during processing of request from',
+        print('Exception happened during processing of request from',
             client_address, file=sys.stderr)
         import traceback
         traceback.print_exc()
@@ -427,7 +425,6 @@ class TCPServer(BaseServer):
     - socket_type
     - request_queue_size (only for stream sockets)
     - allow_reuse_address
-    - allow_reuse_port
 
     Instance variables:
 
@@ -444,8 +441,6 @@ class TCPServer(BaseServer):
     request_queue_size = 5
 
     allow_reuse_address = False
-
-    allow_reuse_port = False
 
     def __init__(self, server_address, RequestHandlerClass, bind_and_activate=True):
         """Constructor.  May be extended, do not override."""
@@ -466,15 +461,8 @@ class TCPServer(BaseServer):
         May be overridden.
 
         """
-        if self.allow_reuse_address and hasattr(socket, "SO_REUSEADDR"):
+        if self.allow_reuse_address:
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        # Since Linux 6.12.9, SO_REUSEPORT is not allowed
-        # on other address families than AF_INET/AF_INET6.
-        if (
-            self.allow_reuse_port and hasattr(socket, "SO_REUSEPORT")
-            and self.address_family in (socket.AF_INET, socket.AF_INET6)
-        ):
-            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         self.socket.bind(self.server_address)
         self.server_address = self.socket.getsockname()
 
@@ -530,8 +518,6 @@ class UDPServer(TCPServer):
     """UDP server class."""
 
     allow_reuse_address = False
-
-    allow_reuse_port = False
 
     socket_type = socket.SOCK_DGRAM
 
@@ -642,39 +628,6 @@ if hasattr(os, "fork"):
             self.collect_children(blocking=self.block_on_close)
 
 
-class _Threads(list):
-    """
-    Joinable list of all non-daemon threads.
-    """
-    def append(self, thread):
-        self.reap()
-        if thread.daemon:
-            return
-        super().append(thread)
-
-    def pop_all(self):
-        self[:], result = [], self[:]
-        return result
-
-    def join(self):
-        for thread in self.pop_all():
-            thread.join()
-
-    def reap(self):
-        self[:] = (thread for thread in self if thread.is_alive())
-
-
-class _NoThreads:
-    """
-    Degenerate version of _Threads.
-    """
-    def append(self, thread):
-        pass
-
-    def join(self):
-        pass
-
-
 class ThreadingMixIn:
     """Mix-in class to handle each request in a new thread."""
 
@@ -683,9 +636,9 @@ class ThreadingMixIn:
     daemon_threads = False
     # If true, server_close() waits until all non-daemonic threads terminate.
     block_on_close = True
-    # Threads object
+    # For non-daemonic threads, list of threading.Threading objects
     # used by server_close() to wait for all threads completion.
-    _threads = _NoThreads()
+    _threads = None
 
     def process_request_thread(self, request, client_address):
         """Same as in BaseServer but as a thread.
@@ -702,17 +655,23 @@ class ThreadingMixIn:
 
     def process_request(self, request, client_address):
         """Start a new thread to process the request."""
-        if self.block_on_close:
-            vars(self).setdefault('_threads', _Threads())
         t = threading.Thread(target = self.process_request_thread,
                              args = (request, client_address))
         t.daemon = self.daemon_threads
-        self._threads.append(t)
+        if not t.daemon and self.block_on_close:
+            if self._threads is None:
+                self._threads = []
+            self._threads.append(t)
         t.start()
 
     def server_close(self):
         super().server_close()
-        self._threads.join()
+        if self.block_on_close:
+            threads = self._threads
+            self._threads = None
+            if threads:
+                for thread in threads:
+                    thread.join()
 
 
 if hasattr(os, "fork"):
@@ -733,11 +692,6 @@ if hasattr(socket, 'AF_UNIX'):
     class ThreadingUnixStreamServer(ThreadingMixIn, UnixStreamServer): pass
 
     class ThreadingUnixDatagramServer(ThreadingMixIn, UnixDatagramServer): pass
-
-    if hasattr(os, "fork"):
-        class ForkingUnixStreamServer(ForkingMixIn, UnixStreamServer): pass
-
-        class ForkingUnixDatagramServer(ForkingMixIn, UnixDatagramServer): pass
 
 class BaseRequestHandler:
 

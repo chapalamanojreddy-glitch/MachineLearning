@@ -50,18 +50,10 @@ def _debug(*args):
         logger = logging.getLogger("http.cookiejar")
     return logger.debug(*args)
 
-HTTPONLY_ATTR = "HTTPOnly"
-HTTPONLY_PREFIX = "#HttpOnly_"
+
 DEFAULT_HTTP_PORT = str(http.client.HTTP_PORT)
-NETSCAPE_MAGIC_RGX = re.compile("#( Netscape)? HTTP Cookie File")
 MISSING_FILENAME_TEXT = ("a filename was not supplied (nor was the CookieJar "
                          "instance initialised with one)")
-NETSCAPE_HEADER_TEXT =  """\
-# Netscape HTTP Cookie File
-# http://curl.haxx.se/rfc/cookie_spec.html
-# This is a generated file!  Do not edit.
-
-"""
 
 def _warn_unhandled_exception():
     # There are a few catch-all except: statements in this module, for
@@ -89,7 +81,8 @@ def _timegm(tt):
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-MONTHS_LOWER = [month.lower() for month in MONTHS]
+MONTHS_LOWER = []
+for month in MONTHS: MONTHS_LOWER.append(month.lower())
 
 def time2isoz(t=None):
     """Return a string representing time in seconds since epoch, t.
@@ -104,9 +97,9 @@ def time2isoz(t=None):
 
     """
     if t is None:
-        dt = datetime.datetime.now(tz=datetime.UTC)
+        dt = datetime.datetime.utcnow()
     else:
-        dt = datetime.datetime.fromtimestamp(t, tz=datetime.UTC)
+        dt = datetime.datetime.utcfromtimestamp(t)
     return "%04d-%02d-%02d %02d:%02d:%02dZ" % (
         dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
 
@@ -122,9 +115,9 @@ def time2netscape(t=None):
 
     """
     if t is None:
-        dt = datetime.datetime.now(tz=datetime.UTC)
+        dt = datetime.datetime.utcnow()
     else:
-        dt = datetime.datetime.fromtimestamp(t, tz=datetime.UTC)
+        dt = datetime.datetime.utcfromtimestamp(t)
     return "%s, %02d-%s-%04d %02d:%02d:%02d GMT" % (
         DAYS[dt.weekday()], dt.day, MONTHS[dt.month-1],
         dt.year, dt.hour, dt.minute, dt.second)
@@ -221,14 +214,10 @@ LOOSE_HTTP_DATE_RE = re.compile(
        (?::(\d\d))?    # optional seconds
     )?                 # optional clock
        \s*
-    (?:
-       ([-+]?\d{2,4}|(?![APap][Mm]\b)[A-Za-z]+) # timezone
+    ([-+]?\d{2,4}|(?![APap][Mm]\b)[A-Za-z]+)? # timezone
        \s*
-    )?
-    (?:
-       \(\w+\)         # ASCII representation of timezone in parens.
-       \s*
-    )?$""", re.X | re.ASCII)
+    (?:\(\w+\))?       # ASCII representation of timezone in parens.
+       \s*$""", re.X | re.ASCII)
 def http2time(text):
     """Returns time in seconds since epoch of time represented by a string.
 
@@ -298,11 +287,9 @@ ISO_DATE_RE = re.compile(
       (?::?(\d\d(?:\.\d*)?))?  # optional seconds (and fractional)
    )?                    # optional clock
       \s*
-   (?:
-      ([-+]?\d\d?:?(:?\d\d)?
-       |Z|z)             # timezone  (Z is "zero meridian", i.e. GMT)
-      \s*
-   )?$""", re.X | re. ASCII)
+   ([-+]?\d\d?:?(:?\d\d)?
+    |Z|z)?               # timezone  (Z is "zero meridian", i.e. GMT)
+      \s*$""", re.X | re. ASCII)
 def iso2time(text):
     """
     As for http2time, but parses the ISO 8601 formats:
@@ -430,7 +417,6 @@ def split_header_words(header_values):
         if pairs: result.append(pairs)
     return result
 
-HEADER_JOIN_TOKEN_RE = re.compile(r"[!#$%&'*+\-.^_`|~0-9A-Za-z]+")
 HEADER_JOIN_ESCAPE_RE = re.compile(r"([\"\\])")
 def join_header_words(lists):
     """Do the inverse (almost) of the conversion done by split_header_words.
@@ -438,10 +424,10 @@ def join_header_words(lists):
     Takes a list of lists of (key, value) pairs and produces a single header
     value.  Attribute values are quoted if needed.
 
-    >>> join_header_words([[("text/plain", None), ("charset", "iso-8859/1")]])
-    'text/plain; charset="iso-8859/1"'
-    >>> join_header_words([[("text/plain", None)], [("charset", "iso-8859/1")]])
-    'text/plain, charset="iso-8859/1"'
+    >>> join_header_words([[("text/plain", None), ("charset", "iso-8859-1")]])
+    'text/plain; charset="iso-8859-1"'
+    >>> join_header_words([[("text/plain", None)], [("charset", "iso-8859-1")]])
+    'text/plain, charset="iso-8859-1"'
 
     """
     headers = []
@@ -449,7 +435,7 @@ def join_header_words(lists):
         attr = []
         for k, v in pairs:
             if v is not None:
-                if not HEADER_JOIN_TOKEN_RE.fullmatch(v):
+                if not re.search(r"^\w+$", v):
                     v = HEADER_JOIN_ESCAPE_RE.sub(r"\\\1", v)  # escape " and \
                     v = '"%s"' % v
                 k = "%s=%s" % (k, v)
@@ -641,7 +627,7 @@ def eff_request_host(request):
 
     """
     erhn = req_host = request_host(request)
-    if "." not in req_host:
+    if req_host.find(".") == -1 and not IPV4_RE.search(req_host):
         erhn = req_host + ".local"
     return req_host, erhn
 
@@ -1044,13 +1030,12 @@ class DefaultCookiePolicy(CookiePolicy):
             else:
                 undotted_domain = domain
             embedded_dots = (undotted_domain.find(".") >= 0)
-            if not embedded_dots and not erhn.endswith(".local"):
+            if not embedded_dots and domain != ".local":
                 _debug("   non-local domain %s contains no embedded dot",
                        domain)
                 return False
             if cookie.version == 0:
-                if (not (erhn.endswith(domain) or
-                         erhn.endswith(f"{undotted_domain}.local")) and
+                if (not erhn.endswith(domain) and
                     (not erhn.startswith(".") and
                      not ("."+erhn).endswith(domain))):
                     _debug("   effective request-host %s (even with added "
@@ -1225,9 +1210,14 @@ class DefaultCookiePolicy(CookiePolicy):
         _debug("  %s does not path-match %s", req_path, path)
         return False
 
+def vals_sorted_by_key(adict):
+    keys = sorted(adict.keys())
+    return map(adict.get, keys)
+
 def deepvalues(mapping):
-    """Iterates over nested mapping, depth-first"""
-    for obj in list(mapping.values()):
+    """Iterates over nested mapping, depth-first, in sorted order by key."""
+    values = vals_sorted_by_key(mapping)
+    for obj in values:
         mapping = False
         try:
             obj.items
@@ -1891,10 +1881,7 @@ class LWPCookieJar(FileCookieJar):
             if self.filename is not None: filename = self.filename
             else: raise ValueError(MISSING_FILENAME_TEXT)
 
-        with os.fdopen(
-            os.open(filename, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600),
-            'w',
-        ) as f:
+        with open(filename, "w") as f:
             # There really isn't an LWP Cookies 2.0 format, but this indicates
             # that there is extra information in here (domain_dot and
             # port_spec) while still being compatible with libwww-perl, I hope.
@@ -1919,7 +1906,9 @@ class LWPCookieJar(FileCookieJar):
                        "comment", "commenturl")
 
         try:
-            while (line := f.readline()) != "":
+            while 1:
+                line = f.readline()
+                if line == "": break
                 if not line.startswith(header):
                     continue
                 line = line[len(header):].strip()
@@ -1987,7 +1976,7 @@ class MozillaCookieJar(FileCookieJar):
 
     This class differs from CookieJar only in the format it uses to save and
     load cookies to and from a file.  This class uses the Mozilla/Netscape
-    'cookies.txt' format.  curl and lynx use this file format, too.
+    `cookies.txt' format.  lynx uses this file format, too.
 
     Don't expect cookies saved while the browser is running to be noticed by
     the browser (in fact, Mozilla on unix will overwrite your saved cookies if
@@ -2009,25 +1998,27 @@ class MozillaCookieJar(FileCookieJar):
     header by default (Mozilla can cope with that).
 
     """
+    magic_re = re.compile("#( Netscape)? HTTP Cookie File")
+    header = """\
+# Netscape HTTP Cookie File
+# http://curl.haxx.se/rfc/cookie_spec.html
+# This is a generated file!  Do not edit.
+
+"""
 
     def _really_load(self, f, filename, ignore_discard, ignore_expires):
         now = time.time()
 
-        if not NETSCAPE_MAGIC_RGX.match(f.readline()):
+        magic = f.readline()
+        if not self.magic_re.search(magic):
             raise LoadError(
                 "%r does not look like a Netscape format cookies file" %
                 filename)
 
         try:
-            while (line := f.readline()) != "":
-                rest = {}
-
-                # httponly is a cookie flag as defined in rfc6265
-                # when encoded in a netscape cookie file,
-                # the line is prepended with "#HttpOnly_"
-                if line.startswith(HTTPONLY_PREFIX):
-                    rest[HTTPONLY_ATTR] = ""
-                    line = line[len(HTTPONLY_PREFIX):]
+            while 1:
+                line = f.readline()
+                if line == "": break
 
                 # last field may be absent, so keep any trailing tab
                 if line.endswith("\n"): line = line[:-1]
@@ -2066,7 +2057,7 @@ class MozillaCookieJar(FileCookieJar):
                            discard,
                            None,
                            None,
-                           rest)
+                           {})
                 if not ignore_discard and c.discard:
                     continue
                 if not ignore_expires and c.is_expired(now):
@@ -2085,21 +2076,17 @@ class MozillaCookieJar(FileCookieJar):
             if self.filename is not None: filename = self.filename
             else: raise ValueError(MISSING_FILENAME_TEXT)
 
-        with os.fdopen(
-            os.open(filename, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600),
-            'w',
-        ) as f:
-            f.write(NETSCAPE_HEADER_TEXT)
+        with open(filename, "w") as f:
+            f.write(self.header)
             now = time.time()
             for cookie in self:
-                domain = cookie.domain
                 if not ignore_discard and cookie.discard:
                     continue
                 if not ignore_expires and cookie.is_expired(now):
                     continue
                 if cookie.secure: secure = "TRUE"
                 else: secure = "FALSE"
-                if domain.startswith("."): initial_dot = "TRUE"
+                if cookie.domain.startswith("."): initial_dot = "TRUE"
                 else: initial_dot = "FALSE"
                 if cookie.expires is not None:
                     expires = str(cookie.expires)
@@ -2114,9 +2101,7 @@ class MozillaCookieJar(FileCookieJar):
                 else:
                     name = cookie.name
                     value = cookie.value
-                if cookie.has_nonstandard_attr(HTTPONLY_ATTR):
-                    domain = HTTPONLY_PREFIX + domain
                 f.write(
-                    "\t".join([domain, initial_dot, cookie.path,
+                    "\t".join([cookie.domain, initial_dot, cookie.path,
                                secure, expires, name, value])+
                     "\n")

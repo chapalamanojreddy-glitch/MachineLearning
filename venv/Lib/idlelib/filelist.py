@@ -1,7 +1,7 @@
 "idlelib.filelist"
 
 import os
-from tkinter import messagebox
+from tkinter import messagebox as tkMessageBox
 
 
 class FileList:
@@ -20,9 +20,9 @@ class FileList:
         filename = self.canonize(filename)
         if os.path.isdir(filename):
             # This can happen when bad filename is passed on command line:
-            messagebox.showerror(
+            tkMessageBox.showerror(
                 "File Error",
-                f"{filename!r} is a directory.",
+                "%r is a directory." % (filename,),
                 master=self.root)
             return None
         key = os.path.normcase(filename)
@@ -88,9 +88,9 @@ class FileList:
         if newkey in self.dict:
             conflict = self.dict[newkey]
             self.inversedict[conflict] = None
-            messagebox.showerror(
+            tkMessageBox.showerror(
                 "Name Conflict",
-                f"You now have multiple edit windows open for {filename!r}",
+                "You now have multiple edit windows open for %r" % (filename,),
                 master=self.root)
         self.dict[newkey] = edit
         self.inversedict[edit] = newkey
@@ -123,7 +123,6 @@ def _test():  # TODO check and convert to htest
     flist.new()
     if flist.inversedict:
         root.mainloop()
-
 
 if __name__ == '__main__':
     from unittest import main

@@ -24,18 +24,18 @@ __all__ = [
 import builtins
 import io
 import os
-from compression._common import _streams
 from _lzma import *
-from _lzma import _encode_filter_properties, _decode_filter_properties  # noqa: F401
+from _lzma import _encode_filter_properties, _decode_filter_properties
+import _compression
 
 
-# Value 0 no longer used
+_MODE_CLOSED   = 0
 _MODE_READ     = 1
 # Value 2 no longer used
 _MODE_WRITE    = 3
 
 
-class LZMAFile(_streams.BaseStream):
+class LZMAFile(_compression.BaseStream):
 
     """A file object providing transparent LZMA (de)compression.
 
@@ -92,7 +92,7 @@ class LZMAFile(_streams.BaseStream):
         """
         self._fp = None
         self._closefp = False
-        self._mode = None
+        self._mode = _MODE_CLOSED
 
         if mode in ("r", "rb"):
             if check != -1:
@@ -127,7 +127,7 @@ class LZMAFile(_streams.BaseStream):
             raise TypeError("filename must be a str, bytes, file or PathLike object")
 
         if self._mode == _MODE_READ:
-            raw = _streams.DecompressReader(self._fp, LZMADecompressor,
+            raw = _compression.DecompressReader(self._fp, LZMADecompressor,
                 trailing_error=LZMAError, format=format, filters=filters)
             self._buffer = io.BufferedReader(raw)
 
@@ -137,7 +137,7 @@ class LZMAFile(_streams.BaseStream):
         May be called more than once without error. Once the file is
         closed, any other operation on it will raise a ValueError.
         """
-        if self.closed:
+        if self._mode == _MODE_CLOSED:
             return
         try:
             if self._mode == _MODE_READ:
@@ -153,20 +153,12 @@ class LZMAFile(_streams.BaseStream):
             finally:
                 self._fp = None
                 self._closefp = False
+                self._mode = _MODE_CLOSED
 
     @property
     def closed(self):
         """True if this file is closed."""
-        return self._fp is None
-
-    @property
-    def name(self):
-        self._check_not_closed()
-        return self._fp.name
-
-    @property
-    def mode(self):
-        return 'wb' if self._mode == _MODE_WRITE else 'rb'
+        return self._mode == _MODE_CLOSED
 
     def fileno(self):
         """Return the file descriptor for the underlying file."""
@@ -233,22 +225,14 @@ class LZMAFile(_streams.BaseStream):
         """Write a bytes object to the file.
 
         Returns the number of uncompressed bytes written, which is
-        always the length of data in bytes. Note that due to buffering,
-        the file on disk may not reflect the data written until close()
-        is called.
+        always len(data). Note that due to buffering, the file on disk
+        may not reflect the data written until close() is called.
         """
         self._check_can_write()
-        if isinstance(data, (bytes, bytearray)):
-            length = len(data)
-        else:
-            # accept any data that supports the buffer protocol
-            data = memoryview(data)
-            length = data.nbytes
-
         compressed = self._compressor.compress(data)
         self._fp.write(compressed)
-        self._pos += length
-        return length
+        self._pos += len(data)
+        return len(data)
 
     def seek(self, offset, whence=io.SEEK_SET):
         """Change the file position.
@@ -318,7 +302,6 @@ def open(filename, mode="rb", *,
                            preset=preset, filters=filters)
 
     if "t" in mode:
-        encoding = io.text_encoding(encoding)
         return io.TextIOWrapper(binary_file, encoding, errors, newline)
     else:
         return binary_file

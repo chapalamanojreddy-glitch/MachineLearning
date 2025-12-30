@@ -2,7 +2,7 @@
 managing secrets such as account authentication, tokens, and similar.
 
 See PEP 506 for more information.
-https://peps.python.org/pep-0506/
+https://www.python.org/dev/peps/pep-0506/
 
 """
 
@@ -13,6 +13,8 @@ __all__ = ['choice', 'randbelow', 'randbits', 'SystemRandom',
 
 
 import base64
+import binascii
+import os
 
 from hmac import compare_digest
 from random import SystemRandom
@@ -42,7 +44,7 @@ def token_bytes(nbytes=None):
     """
     if nbytes is None:
         nbytes = DEFAULT_ENTROPY
-    return _sysrand.randbytes(nbytes)
+    return os.urandom(nbytes)
 
 def token_hex(nbytes=None):
     """Return a random text string, in hexadecimal.
@@ -55,7 +57,7 @@ def token_hex(nbytes=None):
     'f9bf78b9a18ce6d46a0cd2b0b86df9da'
 
     """
-    return token_bytes(nbytes).hex()
+    return binascii.hexlify(token_bytes(nbytes)).decode('ascii')
 
 def token_urlsafe(nbytes=None):
     """Return a random URL-safe text string, in Base64 encoding.

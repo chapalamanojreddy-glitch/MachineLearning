@@ -1,4 +1,4 @@
-# Copyright (C) 2001 Python Software Foundation
+# Copyright (C) 2001-2006 Python Software Foundation
 # Author: Barry Warsaw
 # Contact: email-sig@python.org
 
@@ -10,6 +10,7 @@ from email import message
 from email.mime.nonmultipart import MIMENonMultipart
 
 
+
 class MIMEMessage(MIMENonMultipart):
     """Class representing message/* MIME documents."""
 
