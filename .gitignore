@@ -1,0 +1,10 @@
+
+
+
+.artifacts/.vscode/
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore model files

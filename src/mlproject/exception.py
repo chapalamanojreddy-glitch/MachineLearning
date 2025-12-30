@@ -1,7 +1,15 @@
 import sys
+import os
 
-from mlproject.logger import logging
-
+try:
+    from .logger import logging
+except Exception:
+    # allow running this module directly for quick debugging: ensure 'src' is on sys.path
+    pkg_root = os.path.dirname(__file__)            # .../src/mlproject
+    src_root = os.path.dirname(pkg_root)            # .../src
+    if src_root not in sys.path:
+        sys.path.insert(0, src_root)
+    from mlproject.logger import logging
 
 
 def error_message_details(error,error_detail:sys):

@@ -14,3 +14,7 @@
 [35] root - INFO - Division by zero error
 [22] root - INFO - Logging has started
 [23] root - ERROR - This is an error message
+[34] root - INFO - Entered Data Ingestion method/component
+[37] root - INFO - Dataset read as pandas dataframe
+[42] root - INFO - Raw data saved. Train Test split initiated
+[49] root - INFO - Ingestion of data is completed
