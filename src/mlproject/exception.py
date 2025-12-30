@@ -1,5 +1,6 @@
 import sys
-from src.logger  import logging
+
+from mlproject.logger import logging
 
 
 
@@ -27,10 +28,4 @@ class CustomException(Exception):
 
 
 
-if __name__ == "__main__":
-    try:
-        a = 1 / 0
-    except Exception as e:
-        logging.info("Division by zero error")
-        raise CustomException(e, sys) 
 

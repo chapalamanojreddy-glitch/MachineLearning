@@ -1,6 +1,8 @@
-Metadata-Version: 2.4
-Name: mlproject
+Metadata-Version: 2.1
+Name: MachineLearning
 Version: 0.0.1
+Author: Manoj
+Author-email: chapalamanojreddy@gmail.com
 Requires-Dist: numpy
 Requires-Dist: pandas
 Requires-Dist: scikit-learn
@@ -11,4 +13,3 @@ Requires-Dist: joblib
 Requires-Dist: pyyaml
 Requires-Dist: python-dotenv
 Requires-Dist: dill
-Dynamic: requires-dist

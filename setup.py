@@ -1,5 +1,6 @@
-from setuptools import find_packages, setup
 from typing import List
+
+from setuptools import find_packages, setup
 
 HYPEN_E_DOT = "-e ."
 
@@ -19,12 +20,12 @@ def get_requirements(file_path: str) -> List[str]:
 
     return requirements
 
-
+# setup.py file for packaging the project (MachineLearning)
 setup(
-    name="mlproject",
-    version="0.0.1",
-    package_dir={"": "MachineLearning"},
-    packages=find_packages(where="MachineLearning"),
-    install_requires=get_requirements("requirements.txt"),
+        name='MachineLearning',
+        version='0.0.1',
+        author='Manoj',
+        author_email='chapalamanojreddy@gmail.com',
+        packages=find_packages(),
+        install_requires=get_requirements('requirements.txt')
 )
-
