@@ -4,6 +4,8 @@ scikit-learn
 matplotlib
 seaborn
 scipy
+catboost
+xgboost
 joblib
 pyyaml
 python-dotenv

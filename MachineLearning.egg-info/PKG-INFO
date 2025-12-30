@@ -9,6 +9,8 @@ Requires-Dist: scikit-learn
 Requires-Dist: matplotlib
 Requires-Dist: seaborn
 Requires-Dist: scipy
+Requires-Dist: catboost
+Requires-Dist: xgboost
 Requires-Dist: joblib
 Requires-Dist: pyyaml
 Requires-Dist: python-dotenv

@@ -13,7 +13,7 @@ src/mlproject/utils.py
 src/mlproject/components/__init__.py
 src/mlproject/components/data_ingenstion.py
 src/mlproject/components/data_transformation.py
-src/mlproject/components/moodel_trainer.py
+src/mlproject/components/model_trainer.py
 src/mlproject/pipeline/__init__.py
 src/mlproject/pipeline/predict_pipeline.py
 src/mlproject/pipeline/train_pipeline.py
