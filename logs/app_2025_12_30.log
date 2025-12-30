@@ -1,20 +1,13 @@
-[22] root - INFO - Logging has started
-[23] root - ERROR - This is an error message
-[22] root - INFO - Logging has started
-[23] root - ERROR - This is an error message
-[22] root - INFO - Logging has started
-[23] root - ERROR - This is an error message
-[35] root - INFO - Division by zero error
-[22] root - INFO - Logging has started
-[23] root - ERROR - This is an error message
-[35] root - INFO - Division by zero error
-[35] root - INFO - Division by zero error
-[35] root - INFO - Division by zero error
-[35] root - INFO - Division by zero error
-[35] root - INFO - Division by zero error
-[22] root - INFO - Logging has started
-[23] root - ERROR - This is an error message
-[34] root - INFO - Entered Data Ingestion method/component
-[37] root - INFO - Dataset read as pandas dataframe
-[42] root - INFO - Raw data saved. Train Test split initiated
-[49] root - INFO - Ingestion of data is completed
+[38] root - INFO - Entered Data Ingestion method/component
+[41] root - INFO - Dataset read as pandas dataframe
+[46] root - INFO - Raw data saved. Train Test split initiated
+[53] root - INFO - Ingestion of data is completed
+[67] root - INFO - Read train and test data completed
+[68] root - INFO - Obtaining preprocessing object
+[44] root - INFO - Categorical and Numerical columns are identified
+[45] root - INFO - Numerical columns pipeline created
+[46] root - INFO - Categorical columns pipeline created
+[47] root - INFO - Numerical Columns Standard Scaling Completed
+[48] root - INFO - Categorical Columns Encoding Completed
+[85] root - INFO - Applying preprocessing object on training and testing datasets
+[93] root - INFO - Saved preprocessing object
