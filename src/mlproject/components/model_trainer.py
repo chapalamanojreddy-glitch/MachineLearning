@@ -42,8 +42,8 @@ class ModelTrainer:
                 "Decision Tree": DecisionTreeRegressor(),
                 "Gradient Boosting": GradientBoostingRegressor(),
                 "Linear Regression": LinearRegression(),
-                "XGBRegressor": XGBRegressor(),
-                "CatBoosting Regressor": CatBoostRegressor(verbose=False),
+               ##  "XGBRegressor": XGBRegressor(),
+               ##  "CatBoosting Regressor": CatBoostRegressor(verbose=False),
                 "AdaBoost Regressor": AdaBoostRegressor(),
             }
             params={
@@ -110,6 +110,9 @@ class ModelTrainer:
 
             r2_square = r2_score(y_test, predicted)
             return r2_square
+            logging.info(f"R2 Score: {r2_square}")
+            print("R2 Score:", r2_square)
+        
             
 
 

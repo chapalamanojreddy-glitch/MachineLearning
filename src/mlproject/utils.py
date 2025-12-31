@@ -60,3 +60,9 @@ def load_object(file_path):
 
     except Exception as e:
         raise CustomException(e, sys)
+    
+
+        with open(r"D:\MachineLearning\artifacts\preprocessor.pkl", "rb") as file:
+            preprocessor = pickle.load(file)
+
+        print(preprocessor)

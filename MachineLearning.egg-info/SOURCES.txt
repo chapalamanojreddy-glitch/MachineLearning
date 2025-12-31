@@ -9,6 +9,7 @@ src/__init__.py
 src/mlproject/__init__.py
 src/mlproject/exception.py
 src/mlproject/logger.py
+src/mlproject/test_preprocessor.py
 src/mlproject/utils.py
 src/mlproject/components/__init__.py
 src/mlproject/components/data_ingenstion.py
